@@ -2,7 +2,9 @@
 
 import requests
 import random
+from selenium import webdriver
 import os
+import re
 import time
 import socket
 import http.client
@@ -43,7 +45,7 @@ def get_content(url, data=None):
 
 
 def store_pic(html_text):
-    soup = BeautifulSoup(html_text)  # 构造美汤
+    soup = BeautifulSoup(html_text, "html.parser")  # 构造美汤\
     girls = soup.find_all('div', {'class': 'List-item'})
 
     path = os.path.abspath('.')  # 构造路径
@@ -53,7 +55,7 @@ def store_pic(html_text):
     for girl in girls:
         girl_a = girl.find_all('a', {'class': 'UserLink-link'})[1]
         girl_name = girl_a.get_text()  # 获取用户名
-        girl_url = 'www.zhihu.com/people/' + girl_a['href']  # 获取用户链接
+        girl_url = 'www.zhihu.com' + girl_a['href']  # 获取用户链接
         girl_path = path + '\\' + girl_name  # 构造用户链接
         os.mkdir(girl_path)  # 创建用户文件夹
         with open(girl_path + '\\inf.txt', 'w') as f:
@@ -62,8 +64,10 @@ def store_pic(html_text):
         cnt = 0
         for pic in pics:
             pic_url = pic['src']
+            if pic_url is None or re.match('[a-zA-z]+://[^\s]*', pic_url) is None:
+                continue
+            req = requests.get(pic_url)
             with open(girl_path + r'\%s.jpg' % cnt, 'wb') as fp:
-                req = requests.get(url, stream=True)
                 fp.write(req.content)
             cnt += 1
 
